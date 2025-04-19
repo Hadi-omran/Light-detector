@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lighting Detector</title>
+  <style>
+    video, canvas {
+      display: block;
+      margin: auto;
+      border: 2px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">💡 Lighting Detector (Web)</h2>
+  <video id="video" autoplay playsinline width="640" height="480"></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Access webcam
+    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+      video.srcObject = stream;
+    });
+
+    function detectBrightSpot() {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = frame.data;
+
+      let brightest = { x: 0, y: 0, value: 0 };
+
+      for (let y = 0; y < canvas.height; y += 4) {
+        for (let x = 0; x < canvas.width; x += 4) {
+          const index = (y * canvas.width + x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const brightness = (r + g + b) / 3;
+
+          if (brightness > brightest.value) {
+            brightest = { x, y, value: brightness };
+          }
+        }
+      }
+
+      // Draw a circle on the brightest spot
+      ctx.beginPath();
+      ctx.arc(brightest.x, brightest.y, 15, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    setInterval(detectBrightSpot, 200); // Check every 200ms
+  </script>
+</body>
+</html>
